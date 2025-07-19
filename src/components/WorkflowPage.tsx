@@ -24,7 +24,7 @@ const WorkflowPage = () => {
   const file = location.state?.file;
   const [currentStep, setCurrentStep] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-  const [dashProgress, setDashProgress] = useState(0);
+  const [pathProgress, setPathProgress] = useState<number[]>([0, 0, 0, 0, 0]);
 
   const nodes: WorkflowNode[] = [
     {
@@ -32,42 +32,42 @@ const WorkflowPage = () => {
       icon: <Upload className="w-6 h-6" />,
       label: 'Upload',
       status: 'completed',
-      position: { x: 10, y: 15 }
+      position: { x: 5, y: 10 }
     },
     {
       id: 'audio-extraction',
       icon: <Volume2 className="w-6 h-6" />,
       label: 'Audio Extraction',
       status: currentStep >= 1 ? (currentStep === 1 ? 'processing' : 'completed') : 'pending',
-      position: { x: 30, y: 35 }
+      position: { x: 75, y: 25 }
     },
     {
       id: 'transcription',
       icon: <FileText className="w-6 h-6" />,
       label: 'Transcription',
       status: currentStep >= 2 ? (currentStep === 2 ? 'processing' : 'completed') : 'pending',
-      position: { x: 55, y: 20 }
+      position: { x: 25, y: 40 }
     },
     {
       id: 'translation',
       icon: <Languages className="w-6 h-6" />,
       label: 'Translation',
       status: currentStep >= 3 ? (currentStep === 3 ? 'processing' : 'completed') : 'pending',
-      position: { x: 75, y: 50 }
+      position: { x: 75, y: 55 }
     },
     {
       id: 'voice-cloning',
       icon: <Mic className="w-6 h-6" />,
       label: 'Voice Clone Dubbing',
       status: currentStep >= 4 ? (currentStep === 4 ? 'processing' : 'completed') : 'pending',
-      position: { x: 85, y: 25 }
+      position: { x: 25, y: 70 }
     },
     {
       id: 'download',
       icon: <Download className="w-6 h-6" />,
       label: 'Download',
       status: currentStep >= 5 ? 'completed' : 'pending',
-      position: { x: 90, y: 70 }
+      position: { x: 75, y: 85 }
     }
   ];
 
@@ -77,13 +77,14 @@ const WorkflowPage = () => {
       return;
     }
 
-    // Simulate processing steps
+    // Simulate processing steps with path progress animation
     const timer = setInterval(() => {
       setCurrentStep(prev => {
         if (prev < 5) {
           return prev + 1;
         } else {
           clearInterval(timer);
+          // Simulate download URL generation
           setDownloadUrl('dubbed_audio.mp3');
           return prev;
         }
@@ -93,17 +94,23 @@ const WorkflowPage = () => {
     return () => clearInterval(timer);
   }, [file, navigate]);
 
-  // Animate dash progress continuously
+  // Animate path progress when step changes
   useEffect(() => {
-    if (currentStep > 0) {
+    if (currentStep > 0 && currentStep <= 5) {
+      const pathIndex = currentStep - 1;
+      let progress = 0;
+      
       const progressTimer = setInterval(() => {
-        setDashProgress(prev => {
-          const maxProgress = currentStep * 20; // 20% per step
-          if (prev < maxProgress) {
-            return prev + 0.5;
-          }
-          return prev;
-        });
+        progress += 0.05;
+        if (progress <= 1) {
+          setPathProgress(prev => {
+            const newProgress = [...prev];
+            newProgress[pathIndex] = progress;
+            return newProgress;
+          });
+        } else {
+          clearInterval(progressTimer);
+        }
       }, 50);
 
       return () => clearInterval(progressTimer);
@@ -122,65 +129,39 @@ const WorkflowPage = () => {
     }
   };
 
-  const generateSinglePath = () => {
-    // Create a single smooth curved path through all nodes
-    const pathPoints = nodes.map(node => `${node.position.x},${node.position.y}`);
+  const generatePath = (from: WorkflowNode, to: WorkflowNode, pathIndex: number) => {
+    const startX = from.position.x;
+    const startY = from.position.y;
+    const endX = to.position.x;
+    const endY = to.position.y;
     
-    // Create a smooth curve using SVG path with cubic bezier curves
-    let pathData = `M ${nodes[0].position.x} ${nodes[0].position.y}`;
+    // Create varied S-shaped curves
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
     
-    for (let i = 1; i < nodes.length; i++) {
-      const current = nodes[i];
-      const previous = nodes[i - 1];
-      
-      if (i === 1) {
-        // First curve
-        const cp1x = previous.position.x + (current.position.x - previous.position.x) * 0.3;
-        const cp1y = previous.position.y + (current.position.y - previous.position.y) * 0.1;
-        const cp2x = current.position.x - (current.position.x - previous.position.x) * 0.3;
-        const cp2y = current.position.y - (current.position.y - previous.position.y) * 0.1;
-        pathData += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${current.position.x} ${current.position.y}`;
-      } else {
-        // Smooth continuation
-        const cp1x = previous.position.x + (current.position.x - previous.position.x) * 0.4;
-        const cp1y = previous.position.y + (current.position.y - previous.position.y) * 0.2;
-        const cp2x = current.position.x - (current.position.x - previous.position.x) * 0.4;
-        const cp2y = current.position.y - (current.position.y - previous.position.y) * 0.2;
-        pathData += ` S ${cp2x} ${cp2y}, ${current.position.x} ${current.position.y}`;
-      }
-    }
+    // Different control points for each path to create varied S-curves
+    const variations = [
+      { c1x: startX + 30, c1y: startY - 5, c2x: endX - 25, c2y: endY + 8 },
+      { c1x: startX - 20, c1y: startY + 10, c2x: endX + 30, c2y: endY - 5 },
+      { c1x: startX + 25, c1y: startY + 8, c2x: endX - 30, c2y: endY - 10 },
+      { c1x: startX - 25, c1y: startY - 8, c2x: endX + 20, c2y: endY + 12 },
+      { c1x: startX + 35, c1y: startY + 5, c2x: endX - 15, c2y: endY - 8 }
+    ];
     
-    return pathData;
+    const variation = variations[pathIndex % variations.length];
+    
+    return `M ${startX} ${startY} C ${variation.c1x} ${variation.c1y}, ${variation.c2x} ${variation.c2y}, ${endX} ${endY}`;
   };
 
-  const getDashArray = () => {
-    const totalLength = 500; // Approximate total path length
-    const dashSize = 8;
-    const gapSize = 4;
-    const progressLength = (dashProgress / 100) * totalLength;
-    
-    if (progressLength === 0) return '0 1000';
-    
-    // Create glowing dashes up to progress point
-    let dashArray = '';
-    let currentLength = 0;
-    
-    while (currentLength < progressLength) {
-      const remainingProgress = progressLength - currentLength;
-      const currentDash = Math.min(dashSize, remainingProgress);
-      
-      if (dashArray) dashArray += ' ';
-      dashArray += `${currentDash} ${gapSize}`;
-      currentLength += dashSize + gapSize;
-    }
-    
-    // Add remaining non-glowing portion
-    const remaining = totalLength - progressLength;
-    if (remaining > 0) {
-      dashArray += ` 0 ${remaining}`;
-    }
-    
-    return dashArray;
+  const isPathwayActive = (index: number) => {
+    return currentStep > index;
+  };
+
+  const getPathStrokeDasharray = (index: number) => {
+    const progress = pathProgress[index] || 0;
+    const totalLength = 100; // Approximate path length
+    const dashedLength = totalLength * progress;
+    return `${dashedLength} ${totalLength - dashedLength}`;
   };
 
   const getNodeStatusClass = (status: WorkflowNode['status']) => {
@@ -222,30 +203,26 @@ const WorkflowPage = () => {
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
         >
-          {/* Draw single pathway */}
-          <path
-            d={generateSinglePath()}
-            className="pathway"
-            style={{
-              stroke: dashProgress > 0 ? 'hsl(var(--cosmic-glow))' : 'hsl(var(--pathway))',
-              strokeWidth: dashProgress > 0 ? 2.5 : 1.5,
-              strokeDasharray: getDashArray(),
-              filter: dashProgress > 0 ? 'drop-shadow(0 0 15px hsl(var(--cosmic-glow) / 0.8))' : 'drop-shadow(0 0 8px hsl(var(--cosmic-glow) / 0.4))',
-              opacity: 1
-            }}
-          />
-          
-          {/* Static base path */}
-          <path
-            d={generateSinglePath()}
-            className="pathway"
-            style={{
-              stroke: 'hsl(var(--pathway) / 0.3)',
-              strokeWidth: 1,
-              strokeDasharray: '3 3',
-              opacity: 0.5
-            }}
-          />
+          {/* Draw pathways */}
+          {nodes.slice(0, -1).map((node, index) => {
+            const nextNode = nodes[index + 1];
+            const isActive = isPathwayActive(index);
+            const isCurrentlyAnimating = currentStep === index + 1;
+            
+            return (
+              <path
+                key={`path-${node.id}-${nextNode.id}`}
+                d={generatePath(node, nextNode, index)}
+                className={`pathway ${isCurrentlyAnimating ? 'pathway-glow' : ''}`}
+                style={{
+                  opacity: isActive || isCurrentlyAnimating ? 1 : 0.3,
+                  strokeDasharray: isCurrentlyAnimating ? getPathStrokeDasharray(index) : (isActive ? '3 2' : '2 3'),
+                  stroke: isCurrentlyAnimating ? 'hsl(var(--cosmic-glow))' : 'hsl(var(--pathway))',
+                  strokeWidth: isCurrentlyAnimating ? 2 : 1.5
+                }}
+              />
+            );
+          })}
         </svg>
 
         {/* Render nodes */}
