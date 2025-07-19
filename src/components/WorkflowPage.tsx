@@ -24,6 +24,7 @@ const WorkflowPage = () => {
   const file = location.state?.file;
   const [currentStep, setCurrentStep] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [pathProgress, setPathProgress] = useState<number[]>([0, 0, 0, 0, 0]);
 
   const nodes: WorkflowNode[] = [
     {
@@ -76,7 +77,7 @@ const WorkflowPage = () => {
       return;
     }
 
-    // Simulate processing steps
+    // Simulate processing steps with path progress animation
     const timer = setInterval(() => {
       setCurrentStep(prev => {
         if (prev < 5) {
@@ -88,10 +89,33 @@ const WorkflowPage = () => {
           return prev;
         }
       });
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(timer);
   }, [file, navigate]);
+
+  // Animate path progress when step changes
+  useEffect(() => {
+    if (currentStep > 0 && currentStep <= 5) {
+      const pathIndex = currentStep - 1;
+      let progress = 0;
+      
+      const progressTimer = setInterval(() => {
+        progress += 0.05;
+        if (progress <= 1) {
+          setPathProgress(prev => {
+            const newProgress = [...prev];
+            newProgress[pathIndex] = progress;
+            return newProgress;
+          });
+        } else {
+          clearInterval(progressTimer);
+        }
+      }, 50);
+
+      return () => clearInterval(progressTimer);
+    }
+  }, [currentStep]);
 
   const handleDownload = () => {
     if (downloadUrl) {
@@ -105,25 +129,39 @@ const WorkflowPage = () => {
     }
   };
 
-  const generatePath = (from: WorkflowNode, to: WorkflowNode) => {
+  const generatePath = (from: WorkflowNode, to: WorkflowNode, pathIndex: number) => {
     const startX = from.position.x;
     const startY = from.position.y;
     const endX = to.position.x;
     const endY = to.position.y;
     
-    // Create curved path for hairpin effect
+    // Create varied S-shaped curves
     const midX = (startX + endX) / 2;
-    const controlOffset = startX < endX ? 20 : -20;
+    const midY = (startY + endY) / 2;
     
-    return `M ${startX} ${startY} Q ${midX + controlOffset} ${(startY + endY) / 2} ${endX} ${endY}`;
+    // Different control points for each path to create varied S-curves
+    const variations = [
+      { c1x: startX + 30, c1y: startY - 5, c2x: endX - 25, c2y: endY + 8 },
+      { c1x: startX - 20, c1y: startY + 10, c2x: endX + 30, c2y: endY - 5 },
+      { c1x: startX + 25, c1y: startY + 8, c2x: endX - 30, c2y: endY - 10 },
+      { c1x: startX - 25, c1y: startY - 8, c2x: endX + 20, c2y: endY + 12 },
+      { c1x: startX + 35, c1y: startY + 5, c2x: endX - 15, c2y: endY - 8 }
+    ];
+    
+    const variation = variations[pathIndex % variations.length];
+    
+    return `M ${startX} ${startY} C ${variation.c1x} ${variation.c1y}, ${variation.c2x} ${variation.c2y}, ${endX} ${endY}`;
   };
 
   const isPathwayActive = (index: number) => {
     return currentStep > index;
   };
 
-  const isPathwayGlowing = (index: number) => {
-    return currentStep === index + 1;
+  const getPathStrokeDasharray = (index: number) => {
+    const progress = pathProgress[index] || 0;
+    const totalLength = 100; // Approximate path length
+    const dashedLength = totalLength * progress;
+    return `${dashedLength} ${totalLength - dashedLength}`;
   };
 
   const getNodeStatusClass = (status: WorkflowNode['status']) => {
@@ -155,10 +193,6 @@ const WorkflowPage = () => {
           <span>Back to Upload</span>
         </button>
         
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Processing: {file.name}
-        </h1>
-        
         <div className="w-24"></div>
       </div>
 
@@ -173,16 +207,18 @@ const WorkflowPage = () => {
           {nodes.slice(0, -1).map((node, index) => {
             const nextNode = nodes[index + 1];
             const isActive = isPathwayActive(index);
-            const isGlowing = isPathwayGlowing(index);
+            const isCurrentlyAnimating = currentStep === index + 1;
             
             return (
               <path
                 key={`path-${node.id}-${nextNode.id}`}
-                d={generatePath(node, nextNode)}
-                className={`pathway ${isActive ? 'animate-pathway-flow' : ''} ${isGlowing ? 'pathway-glow' : ''}`}
+                d={generatePath(node, nextNode, index)}
+                className={`pathway ${isCurrentlyAnimating ? 'pathway-glow' : ''}`}
                 style={{
-                  opacity: isActive ? 1 : 0.3,
-                  strokeDasharray: isActive ? '3 2' : '2 3'
+                  opacity: isActive || isCurrentlyAnimating ? 1 : 0.3,
+                  strokeDasharray: isCurrentlyAnimating ? getPathStrokeDasharray(index) : (isActive ? '3 2' : '2 3'),
+                  stroke: isCurrentlyAnimating ? 'hsl(var(--cosmic-glow))' : 'hsl(var(--pathway))',
+                  strokeWidth: isCurrentlyAnimating ? 2 : 1.5
                 }}
               />
             );
