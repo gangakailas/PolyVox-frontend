@@ -27,49 +27,49 @@ const WorkflowPage = () => {
   const [dashProgress, setDashProgress] = useState<number[]>([0, 0, 0, 0, 0]);
   const [nodeFlicker, setNodeFlicker] = useState<boolean[]>([false, false, false, false, false, false]);
 
-  // Hairpin circuit layout - like an electrical circuit board
+  // Proper hairpin bend layout - alternating left-right like a race track hairpin
   const nodes: WorkflowNode[] = [
     {
       id: 'upload',
       icon: <Upload className="w-6 h-6" />,
       label: 'Upload',
       status: 'completed',
-      position: { x: 15, y: 15 }
+      position: { x: 20, y: 20 }
     },
     {
       id: 'audio-extraction',
       icon: <Volume2 className="w-6 h-6" />,
       label: 'Audio Extraction',
       status: currentStep >= 1 ? (currentStep === 1 ? 'processing' : 'completed') : 'pending',
-      position: { x: 85, y: 15 }
+      position: { x: 80, y: 35 }
     },
     {
       id: 'transcription',
       icon: <FileText className="w-6 h-6" />,
       label: 'Transcription',
       status: currentStep >= 2 ? (currentStep === 2 ? 'processing' : 'completed') : 'pending',
-      position: { x: 85, y: 45 }
+      position: { x: 80, y: 65 }
     },
     {
       id: 'translation',
       icon: <Languages className="w-6 h-6" />,
       label: 'Translation',
       status: currentStep >= 3 ? (currentStep === 3 ? 'processing' : 'completed') : 'pending',
-      position: { x: 85, y: 75 }
+      position: { x: 20, y: 80 }
     },
     {
       id: 'voice-cloning',
       icon: <Mic className="w-6 h-6" />,
       label: 'Voice Clone Dubbing',
       status: currentStep >= 4 ? (currentStep === 4 ? 'processing' : 'completed') : 'pending',
-      position: { x: 15, y: 75 }
+      position: { x: 20, y: 50 }
     },
     {
       id: 'download',
       icon: <Download className="w-6 h-6" />,
       label: 'Download',
       status: currentStep >= 5 ? 'completed' : 'pending',
-      position: { x: 15, y: 45 }
+      position: { x: 50, y: 35 }
     }
   ];
 
@@ -147,29 +147,39 @@ const WorkflowPage = () => {
     }
   };
 
-  // Generate hairpin circuit paths - entering from top, exiting from bottom (FIXED)
+  // Generate smooth hairpin bend curves - like a racing track hairpin turn
   const generateCircuitPath = (from: WorkflowNode, to: WorkflowNode, pathIndex: number) => {
     const startX = from.position.x;
     const startY = from.position.y + 3; // Exit from bottom of node
     const endX = to.position.x;
     const endY = to.position.y - 3; // Enter from top of node
     
-    // Create hairpin-like circuit paths
+    // Create smooth S-curves for proper hairpin bends
     if (pathIndex === 0) {
-      // Upload to Audio Extraction - horizontal right
-      return `M ${startX} ${startY} L ${startX + 35} ${startY} L ${startX + 35} ${endY} L ${endX} ${endY}`;
+      // Upload to Audio Extraction - smooth curve right
+      const cp1x = startX + 30, cp1y = startY + 5;
+      const cp2x = endX - 30, cp2y = endY - 5;
+      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
     } else if (pathIndex === 1) {
-      // Audio Extraction to Transcription - straight down
-      return `M ${startX} ${startY} L ${endX} ${endY}`;
+      // Audio Extraction to Transcription - smooth curve down
+      const cp1x = startX + 5, cp1y = startY + 15;
+      const cp2x = endX + 5, cp2y = endY - 15;
+      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
     } else if (pathIndex === 2) {
-      // Transcription to Translation - straight down  
-      return `M ${startX} ${startY} L ${endX} ${endY}`;
+      // Transcription to Translation - smooth hairpin curve left
+      const cp1x = startX - 30, cp1y = startY + 8;
+      const cp2x = endX + 30, cp2y = endY - 8;
+      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
     } else if (pathIndex === 3) {
-      // Translation to Voice Cloning - horizontal left and down
-      return `M ${startX} ${startY} L ${startX} ${startY + 15} L ${endX - 35} ${startY + 15} L ${endX - 35} ${endY} L ${endX} ${endY}`;
+      // Translation to Voice Cloning - smooth curve up-left  
+      const cp1x = startX - 5, cp1y = startY - 15;
+      const cp2x = endX - 5, cp2y = endY + 15;
+      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
     } else {
-      // Voice Cloning to Download - up
-      return `M ${startX} ${startY} L ${endX} ${endY}`;
+      // Voice Cloning to Download - final curve to center
+      const cp1x = startX + 15, cp1y = startY - 8;
+      const cp2x = endX - 15, cp2y = endY + 8;
+      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
     }
   };
 
@@ -250,9 +260,9 @@ const WorkflowPage = () => {
                   opacity: isActive || isCurrentlyAnimating ? 1 : 0.2,
                   strokeDasharray: getElectricDashArray(index),
                   strokeDashoffset: isCurrentlyAnimating ? `${100 * (1 - progress)}` : '0',
-                  stroke: isCurrentlyAnimating && progress > 0 ? '#00ffff' : (isActive ? '#4a90e2' : '#333'),
-                  strokeWidth: 1,
-                  filter: isCurrentlyAnimating && progress > 0 ? 'drop-shadow(0 0 3px #00ffff)' : 'none',
+                  stroke: isCurrentlyAnimating && progress > 0 ? 'hsl(var(--cosmic-glow))' : (isActive ? 'hsl(var(--primary))' : 'hsl(var(--pathway))'),
+                  strokeWidth: 1.5,
+                  filter: isCurrentlyAnimating && progress > 0 ? 'drop-shadow(0 0 4px hsl(var(--cosmic-glow)))' : 'none',
                   transition: 'none'
                 }}
               />
@@ -279,7 +289,7 @@ const WorkflowPage = () => {
                   : ''
               }`}
               style={{
-                filter: nodeFlicker[nodeIndex] ? 'drop-shadow(0 0 8px #00ffff) brightness(1.3)' : 'none',
+                filter: nodeFlicker[nodeIndex] ? 'drop-shadow(0 0 8px hsl(var(--cosmic-glow))) brightness(1.3)' : 'none',
                 transition: 'filter 0.1s ease-in-out'
               }}
               onClick={node.id === 'download' && node.status === 'completed' ? handleDownload : undefined}
