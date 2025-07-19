@@ -147,7 +147,7 @@ const WorkflowPage = () => {
     }
   };
 
-  // Generate hairpin circuit paths - entering from top, exiting from bottom
+  // Generate hairpin circuit paths - entering from top, exiting from bottom (FIXED)
   const generateCircuitPath = (from: WorkflowNode, to: WorkflowNode, pathIndex: number) => {
     const startX = from.position.x;
     const startY = from.position.y + 3; // Exit from bottom of node
