@@ -1,7 +1,7 @@
-import WorkflowVisualization from "@/components/WorkflowVisualization";
+import WorkflowPage from "@/components/WorkflowPage";
 
 const Workflow = () => {
-  return <WorkflowVisualization />;
+  return <WorkflowPage />;
 };
 
 export default Workflow;
