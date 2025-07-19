@@ -27,49 +27,49 @@ const WorkflowPage = () => {
   const [dashProgress, setDashProgress] = useState<number[]>([0, 0, 0, 0, 0]);
   const [nodeFlicker, setNodeFlicker] = useState<boolean[]>([false, false, false, false, false, false]);
 
-  // Proper hairpin bend layout - alternating left-right like a race track hairpin
+  // Straight left-right alternating hairpin layout
   const nodes: WorkflowNode[] = [
     {
       id: 'upload',
       icon: <Upload className="w-6 h-6" />,
       label: 'Upload',
       status: 'completed',
-      position: { x: 20, y: 20 }
+      position: { x: 20, y: 15 } // LEFT
     },
     {
       id: 'audio-extraction',
       icon: <Volume2 className="w-6 h-6" />,
       label: 'Audio Extraction',
       status: currentStep >= 1 ? (currentStep === 1 ? 'processing' : 'completed') : 'pending',
-      position: { x: 80, y: 35 }
+      position: { x: 80, y: 30 } // RIGHT
     },
     {
       id: 'transcription',
       icon: <FileText className="w-6 h-6" />,
       label: 'Transcription',
       status: currentStep >= 2 ? (currentStep === 2 ? 'processing' : 'completed') : 'pending',
-      position: { x: 80, y: 65 }
+      position: { x: 20, y: 45 } // LEFT
     },
     {
       id: 'translation',
       icon: <Languages className="w-6 h-6" />,
       label: 'Translation',
       status: currentStep >= 3 ? (currentStep === 3 ? 'processing' : 'completed') : 'pending',
-      position: { x: 20, y: 80 }
+      position: { x: 80, y: 60 } // RIGHT
     },
     {
       id: 'voice-cloning',
       icon: <Mic className="w-6 h-6" />,
       label: 'Voice Clone Dubbing',
       status: currentStep >= 4 ? (currentStep === 4 ? 'processing' : 'completed') : 'pending',
-      position: { x: 20, y: 50 }
+      position: { x: 20, y: 75 } // LEFT
     },
     {
       id: 'download',
       icon: <Download className="w-6 h-6" />,
       label: 'Download',
       status: currentStep >= 5 ? 'completed' : 'pending',
-      position: { x: 50, y: 35 }
+      position: { x: 80, y: 90 } // RIGHT
     }
   ];
 
@@ -147,39 +147,23 @@ const WorkflowPage = () => {
     }
   };
 
-  // Generate smooth hairpin bend curves - like a racing track hairpin turn
+  // Generate smooth S-curves connecting left-right alternating nodes
   const generateCircuitPath = (from: WorkflowNode, to: WorkflowNode, pathIndex: number) => {
     const startX = from.position.x;
     const startY = from.position.y + 3; // Exit from bottom of node
     const endX = to.position.x;
     const endY = to.position.y - 3; // Enter from top of node
     
-    // Create smooth S-curves for proper hairpin bends
-    if (pathIndex === 0) {
-      // Upload to Audio Extraction - smooth curve right
-      const cp1x = startX + 30, cp1y = startY + 5;
-      const cp2x = endX - 30, cp2y = endY - 5;
-      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
-    } else if (pathIndex === 1) {
-      // Audio Extraction to Transcription - smooth curve down
-      const cp1x = startX + 5, cp1y = startY + 15;
-      const cp2x = endX + 5, cp2y = endY - 15;
-      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
-    } else if (pathIndex === 2) {
-      // Transcription to Translation - smooth hairpin curve left
-      const cp1x = startX - 30, cp1y = startY + 8;
-      const cp2x = endX + 30, cp2y = endY - 8;
-      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
-    } else if (pathIndex === 3) {
-      // Translation to Voice Cloning - smooth curve up-left  
-      const cp1x = startX - 5, cp1y = startY - 15;
-      const cp2x = endX - 5, cp2y = endY + 15;
-      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
+    // Simple S-curves for left-right alternating pattern
+    const midY = (startY + endY) / 2;
+    const curve = 15; // Control how pronounced the curve is
+    
+    if (startX < endX) {
+      // Left to Right
+      return `M ${startX} ${startY} C ${startX + curve} ${midY}, ${endX - curve} ${midY}, ${endX} ${endY}`;
     } else {
-      // Voice Cloning to Download - final curve to center
-      const cp1x = startX + 15, cp1y = startY - 8;
-      const cp2x = endX - 15, cp2y = endY + 8;
-      return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
+      // Right to Left  
+      return `M ${startX} ${startY} C ${startX - curve} ${midY}, ${endX + curve} ${midY}, ${endX} ${endY}`;
     }
   };
 
@@ -187,20 +171,23 @@ const WorkflowPage = () => {
     return currentStep > index;
   };
 
-  // Electric dash animation effect
+  // Progressive dash lighting effect - lights up dash by dash
   const getElectricDashArray = (index: number) => {
     const progress = dashProgress[index] || 0;
-    const dashLength = 2;
-    const gapLength = 3;
-    const totalLength = 100;
-    const activeDashes = Math.floor((totalLength * progress) / (dashLength + gapLength));
+    const dashLength = 4;
+    const gapLength = 4;
+    const pathLength = 200; // Approximate path length in SVG units
     
-    // Create dash pattern with glowing effect
-    if (progress > 0 && progress < 1) {
-      return `${dashLength} ${gapLength}`;
-    } else if (progress >= 1) {
-      return `${dashLength} ${gapLength}`;
+    if (progress === 0) {
+      // No dashes lit initially - all dim
+      return `0 ${pathLength}`;
+    } else if (progress < 1) {
+      // Progressive lighting - lit section followed by dim section
+      const litLength = pathLength * progress;
+      const dimLength = pathLength - litLength;
+      return `${litLength} ${dimLength}`;
     } else {
+      // Fully lit with normal dash pattern
       return `${dashLength} ${gapLength}`;
     }
   };
@@ -259,7 +246,6 @@ const WorkflowPage = () => {
                 style={{
                   opacity: isActive || isCurrentlyAnimating ? 1 : 0.2,
                   strokeDasharray: getElectricDashArray(index),
-                  strokeDashoffset: isCurrentlyAnimating ? `${100 * (1 - progress)}` : '0',
                   stroke: isCurrentlyAnimating && progress > 0 ? 'hsl(var(--cosmic-glow))' : (isActive ? 'hsl(var(--primary))' : 'hsl(var(--pathway))'),
                   strokeWidth: 1.5,
                   filter: isCurrentlyAnimating && progress > 0 ? 'drop-shadow(0 0 4px hsl(var(--cosmic-glow)))' : 'none',
