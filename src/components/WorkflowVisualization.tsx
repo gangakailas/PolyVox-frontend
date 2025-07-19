@@ -18,15 +18,13 @@ interface WorkflowNode {
   position: { x: number; y: number };
 }
 
-const WorkflowPage = () => {
+const WorkflowVisualization = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const file = location.state?.file;
   const [currentStep, setCurrentStep] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [pathProgress, setPathProgress] = useState(0);
-
-  console.log('WorkflowPage render:', { currentStep, pathProgress });
 
   // Generate positions along a single curved path
   const generateNodePositions = (): { x: number; y: number }[] => {
@@ -99,14 +97,13 @@ const WorkflowPage = () => {
       return;
     }
 
-    // Simulate processing steps with path progress animation
+    // Simulate processing steps
     const timer = setInterval(() => {
       setCurrentStep(prev => {
         if (prev < 5) {
           return prev + 1;
         } else {
           clearInterval(timer);
-          // Simulate download URL generation
           setDownloadUrl('dubbed_audio.mp3');
           return prev;
         }
@@ -136,7 +133,6 @@ const WorkflowPage = () => {
 
   const handleDownload = () => {
     if (downloadUrl) {
-      // Simulate download
       const link = document.createElement('a');
       link.href = '#';
       link.download = downloadUrl;
@@ -154,12 +150,9 @@ const WorkflowPage = () => {
       const node = nodes[i];
       
       if (i === 0) {
-        // Move to first node
         pathCommands.push(`M ${node.position.x} ${node.position.y}`);
       } else {
         const prevNode = nodes[i - 1];
-        
-        // Create smooth curve to next node
         const controlOffset = 10;
         const c1x = prevNode.position.x + controlOffset;
         const c1y = prevNode.position.y;
@@ -175,12 +168,11 @@ const WorkflowPage = () => {
 
   const getPathStrokeDasharray = () => {
     const currentProgress = Math.min(pathProgress, currentStep / 5);
-    const totalLength = 500; // Approximate total path length
+    const totalLength = 500;
     const activeLength = totalLength * currentProgress;
     const dashLength = 10;
     const gapLength = 5;
     
-    // Create dash pattern that appears to move
     const numDashes = Math.floor(activeLength / (dashLength + gapLength));
     const remainingLength = activeLength % (dashLength + gapLength);
     
@@ -232,12 +224,11 @@ const WorkflowPage = () => {
 
       {/* Workflow Visualization */}
       <div className="relative z-10 h-[calc(100vh-120px)] p-8">
-         <svg
+        <svg
           className="absolute inset-0 w-full h-full"
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
         >
-          {/* Single curved path through all nodes */}
           <path
             d={generateSinglePath()}
             className="pathway pathway-glow"
@@ -284,7 +275,6 @@ const WorkflowPage = () => {
             </div>
           </div>
         ))}
-
       </div>
 
       {/* Progress Bar */}
@@ -306,4 +296,4 @@ const WorkflowPage = () => {
   );
 };
 
-export default WorkflowPage;
+export default WorkflowVisualization;
