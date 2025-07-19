@@ -3,6 +3,10 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+
+  /* 👇 Add these two lines */
+  overflow-y: auto;
+  height: 100vh;
 }
 
 .logo {
