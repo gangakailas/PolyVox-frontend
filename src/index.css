@@ -204,11 +204,21 @@ All colors MUST be HSL.
   /* Pathway styles */
   .pathway {
     stroke: hsl(var(--pathway));
-    stroke-width: 3;
-    stroke-dasharray: 10 5;
+    stroke-width: 1.5;
+    stroke-dasharray: 3 2;
     fill: none;
     filter: drop-shadow(0 0 8px hsl(var(--cosmic-glow) / 0.4));
-    animation: pathway-flow 3s linear infinite;
+    transition: all 0.3s ease;
+  }
+
+  .pathway.animate-pathway-flow {
+    animation: pathway-flow 2s linear infinite;
+  }
+
+  .pathway.pathway-glow {
+    stroke: hsl(var(--cosmic-glow));
+    stroke-width: 2;
+    filter: drop-shadow(0 0 12px hsl(var(--cosmic-glow) / 0.8));
   }
 
   /* Wormhole effect */
@@ -238,7 +248,12 @@ All colors MUST be HSL.
 
   @keyframes pathway-flow {
     0% { stroke-dashoffset: 0; }
-    100% { stroke-dashoffset: 30; }
+    100% { stroke-dashoffset: 10; }
+  }
+
+  @keyframes pathway-glow-progress {
+    0% { stroke-dasharray: 0 100%; }
+    100% { stroke-dasharray: 100% 0; }
   }
 
   @keyframes wormhole-spin {

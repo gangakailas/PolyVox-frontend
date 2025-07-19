@@ -31,13 +31,10 @@ const UploadPage = () => {
     const files = e.target.files;
     if (files && files.length > 0) {
       setSelectedFile(files[0]);
-    }
-  };
-
-  const handleProcessFile = () => {
-    if (selectedFile) {
-      // Navigate to workflow page with file data
-      navigate('/workflow', { state: { file: selectedFile } });
+      // Auto-navigate after a short delay to show file info
+      setTimeout(() => {
+        navigate('/workflow', { state: { file: files[0] } });
+      }, 1500);
     }
   };
 
@@ -83,33 +80,27 @@ const UploadPage = () => {
                   <p className="text-sm text-muted-foreground">
                     {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                   </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    File ready for processing...
+                  </p>
                 </div>
-                <button
-                  onClick={handleProcessFile}
-                  className="upload-cosmic"
-                >
-                  Start Processing
-                </button>
               </>
             ) : (
               <>
-                <div className="workflow-node animate-glow-pulse">
+                <label
+                  htmlFor="file-upload"
+                  className="workflow-node animate-glow-pulse cursor-pointer hover:scale-110 transition-transform duration-300"
+                >
                   <Upload className="w-8 h-8" />
-                </div>
+                </label>
                 <div className="text-center">
                   <p className="text-lg font-medium text-foreground">
                     Drop your MP4 file here
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    or click to browse
+                    or click the upload button
                   </p>
                 </div>
-                <label
-                  htmlFor="file-upload"
-                  className="upload-cosmic cursor-pointer"
-                >
-                  Choose File
-                </label>
               </>
             )}
           </div>

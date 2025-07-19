@@ -118,6 +118,14 @@ const WorkflowPage = () => {
     return `M ${startX} ${startY} Q ${midX + controlOffset} ${(startY + endY) / 2} ${endX} ${endY}`;
   };
 
+  const isPathwayActive = (index: number) => {
+    return currentStep > index;
+  };
+
+  const isPathwayGlowing = (index: number) => {
+    return currentStep === index + 1;
+  };
+
   const getNodeStatusClass = (status: WorkflowNode['status']) => {
     switch (status) {
       case 'completed':
@@ -164,16 +172,17 @@ const WorkflowPage = () => {
           {/* Draw pathways */}
           {nodes.slice(0, -1).map((node, index) => {
             const nextNode = nodes[index + 1];
-            const isActive = currentStep > index;
+            const isActive = isPathwayActive(index);
+            const isGlowing = isPathwayGlowing(index);
             
             return (
               <path
                 key={`path-${node.id}-${nextNode.id}`}
                 d={generatePath(node, nextNode)}
-                className={`pathway ${isActive ? 'animate-pathway-flow' : ''}`}
+                className={`pathway ${isActive ? 'animate-pathway-flow' : ''} ${isGlowing ? 'pathway-glow' : ''}`}
                 style={{
                   opacity: isActive ? 1 : 0.3,
-                  strokeDasharray: isActive ? '10 5' : '5 10'
+                  strokeDasharray: isActive ? '3 2' : '2 3'
                 }}
               />
             );
@@ -190,7 +199,14 @@ const WorkflowPage = () => {
               top: `${node.position.y}%`
             }}
           >
-            <div className={getNodeStatusClass(node.status)}>
+            <div 
+              className={`${getNodeStatusClass(node.status)} ${
+                node.id === 'download' && node.status === 'completed' 
+                  ? 'cursor-pointer hover:scale-125 transition-transform duration-300' 
+                  : ''
+              }`}
+              onClick={node.id === 'download' && node.status === 'completed' ? handleDownload : undefined}
+            >
               {node.icon}
             </div>
             <div className="text-center mt-3">
@@ -199,7 +215,7 @@ const WorkflowPage = () => {
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {node.status === 'processing' && 'Processing...'}
-                {node.status === 'completed' && 'Completed'}
+                {node.status === 'completed' && (node.id === 'download' ? 'Click to download' : 'Completed')}
                 {node.status === 'pending' && 'Waiting...'}
                 {node.status === 'error' && 'Error'}
               </p>
@@ -207,23 +223,6 @@ const WorkflowPage = () => {
           </div>
         ))}
 
-        {/* Download Button */}
-        {currentStep >= 5 && downloadUrl && (
-          <div
-            className="absolute transform -translate-x-1/2 -translate-y-1/2"
-            style={{
-              left: `${nodes[5].position.x}%`,
-              top: `${nodes[5].position.y + 12}%`
-            }}
-          >
-            <button
-              onClick={handleDownload}
-              className="upload-cosmic animate-glow-pulse"
-            >
-              Download MP3
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Progress Bar */}
