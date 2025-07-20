@@ -28,12 +28,12 @@ const WorkflowPage = () => {
   const [nodeFlicker, setNodeFlicker] = useState<boolean[]>([false, false, false, false, false, false]);
 
 const nodes: WorkflowNode[] = [
-  { id: 'upload', icon: <Upload className="w-6 h-6" />, label: 'Upload', status: 'completed', position: { x: 49, y: 10 } },
-  { id: 'audio-extraction', icon: <Volume2 className="w-6 h-6" />, label: 'Audio Extraction', status: currentStep >= 1 ? (currentStep === 1 ? 'processing' : 'completed') : 'pending', position: { x: 80, y: 25 } },
-  { id: 'transcription', icon: <FileText className="w-6 h-6" />, label: 'Transcription', status: currentStep >= 2 ? (currentStep === 2 ? 'processing' : 'completed') : 'pending', position: { x: 20, y: 40 } },
-  { id: 'translation', icon: <Languages className="w-6 h-6" />, label: 'Translation', status: currentStep >= 3 ? (currentStep === 3 ? 'processing' : 'completed') : 'pending', position: { x: 79, y: 50 } },
-  { id: 'voice-cloning', icon: <Mic className="w-6 h-6" />, label: 'Voice Clone Dubbing', status: currentStep >= 4 ? (currentStep === 4 ? 'processing' : 'completed') : 'pending', position: { x: 22, y: 65 } },
-  { id: 'download', icon: <Download className="w-6 h-6" />, label: 'Download', status: currentStep >= 5 ? 'completed' : 'pending', position: { x: 51, y: 80 } }
+  { id: 'upload', icon: <Upload className="w-6 h-6 text-yellow-400" />, label: 'Upload', status: 'completed', position: { x: 49, y: 10 } },
+  { id: 'audio-extraction', icon: <Volume2 className="w-6 h-6 text-orange-400" />, label: 'Audio Extraction', status: currentStep >= 1 ? (currentStep === 1 ? 'processing' : 'completed') : 'pending', position: { x: 80, y: 25 } },
+  { id: 'transcription', icon: <FileText className="w-6 h-6 text-blue-400" />, label: 'Transcription', status: currentStep >= 2 ? (currentStep === 2 ? 'processing' : 'completed') : 'pending', position: { x: 20, y: 40 } },
+  { id: 'translation', icon: <Languages className="w-6 h-6 text-purple-400" />, label: 'Translation', status: currentStep >= 3 ? (currentStep === 3 ? 'processing' : 'completed') : 'pending', position: { x: 79, y: 50 } },
+  { id: 'voice-cloning', icon: <Mic className="w-6 h-6 text-teal-400" />, label: 'Voice Clone Dubbing', status: currentStep >= 4 ? (currentStep === 4 ? 'processing' : 'completed') : 'pending', position: { x: 22, y: 65 } },
+  { id: 'download', icon: <Download className="w-6 h-6 text-green-400" />, label: 'Download', status: currentStep >= 5 ? 'completed' : 'pending', position: { x: 51, y: 80 } }
 ];
 
   useEffect(() => {
